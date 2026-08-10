@@ -1,4 +1,4 @@
--- arpeggii v1.2
+-- arpeggii v1.3
 --
 -- dual arps      
 
@@ -133,10 +133,10 @@ local k1_priority = "replace"
 local pending_replace_mode = "mute"
 
 -- whether the hold/sticky toggles (k1+k2, k1+k3) are live, layer-only
--- settings that phrase save/recall never touches ("global", default), or part
--- of each phrase's own saved content ("per phrase"). the toggles
+-- settings that phrase save/recall never touches ("per_layer", default), or
+-- part of each phrase's own saved content ("per_phrase"). the toggles
 -- themselves always stay per-layer and apply immediately either way.
-local hold_sticky_mode = "global"
+local hold_sticky_mode = "per_layer"
 
 local voice_refcount = {}  -- used in "merge" mode: [key] = overlap count
 local voice_active = {}    -- used in "skip" mode: [key] = true while sounding
@@ -1019,7 +1019,7 @@ local function capture_layer(layer)
     --
     -- hold/sticky are always captured here regardless of hold_sticky_mode:
     -- capturing is cheap and keeps this data around even when saving in
-    -- "global" mode. it's recall_layer that actually decides whether to
+    -- "per_layer" mode. it's recall_layer that actually decides whether to
     -- apply them, based on hold_sticky_mode at recall time, so switching
     -- modes later doesn't silently strand or fabricate this info either way.
     hold = layer.hold,
@@ -1077,8 +1077,8 @@ local function recall_layer(layer, snapshot)
 
   -- notes recalled below always land in layer.latched regardless of mode.
   -- if hold ends up off, either because this phrase's own saved hold was
-  -- off ("per phrase" mode) or because that's simply the layer's current
-  -- live setting ("global" mode), active_notes falls back to layer.held
+  -- off ("per_phrase" mode) or because that's simply the layer's current
+  -- live setting ("per_layer" mode), active_notes falls back to layer.held
   -- (live keys) instead, so the arp stays silent here until something's
   -- actually held again.
   if hold_sticky_mode == "per_phrase" then
@@ -1087,8 +1087,8 @@ local function recall_layer(layer, snapshot)
     if snapshot.hold == nil then layer.hold = true else layer.hold = snapshot.hold end
     if snapshot.sticky == nil then layer.sticky = false else layer.sticky = snapshot.sticky end
   end
-  -- "global": hold/sticky are live per-layer settings that phrase recall
-  -- never touches; leave them exactly as they already were.
+  -- "per_layer": hold/sticky are live per-layer settings that phrase
+  -- recall never touches; leave them exactly as they already were.
 
   layer.held = {}
   layer.latched = {}
@@ -3735,11 +3735,11 @@ function init()
     action = function(v) pending_replace_mode = (v == 1) and "mute" or "none" end}
 
   -- controls whether the hold/sticky toggles are live layer-only
-  -- settings ("global") or get saved/recalled with each phrase, per
-  -- layer ("per phrase") -- see the hold_sticky_mode comment above.
+  -- settings ("per_layer") or get saved/recalled with each phrase
+  -- ("per_phrase") -- see the hold_sticky_mode comment above.
   params:add{type = "option", id = "hold_sticky_mode", name = "hold/sticky",
-    options = {"global", "per phrase"}, default = 1,
-    action = function(v) hold_sticky_mode = (v == 1) and "global" or "per_phrase" end}
+    options = {"per layer", "per phrase"}, default = 1,
+    action = function(v) hold_sticky_mode = (v == 1) and "per_layer" or "per_phrase" end}
 
   -- destructive and immediate: wipes every saved phrase slot on both
   -- layers, no confirmation, no undo -- see clear_all_patterns above.
