@@ -3,7 +3,7 @@
 
 Two-layer arpeggiator with up to 16 notes, velocity control, note divisor/modulo and per-layer phrase save/recall.
 
-**Required:** norns, grid 128, a midi input device, a midi-enabled sound generator
+**Required:** norns, grid 64 (untested) or 128, a midi input device, a midi-enabled sound generator
 
 <img src="media/3.png" width="800">
 
@@ -39,8 +39,8 @@ All controls apply to the currently selected layer only.
 Phrases contain a full layer snapshot, including arp settings.
   Snapshots containing no notes are displayed dimmer on the grid.
 
-- left 64 cells: layer A
-- right 64 cells: layer B
+- left half: layer A
+- right half: layer B
 - tap to save/recall
 - `K1`+tap to delete
 
