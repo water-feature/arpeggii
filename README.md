@@ -5,6 +5,8 @@ Two-layer arpeggiator with up to 16 notes, velocity control, note divisor/modulo
 
 Required: norns, grid 64 (untested) or 128, a midi input device, a midi-enabled sound generator
 
+Play notes and arpeggiate them. Mix and match arps on both layers. Remember to set your synth to local off if it's also your keyboard.
+
 <img src="media/3.png" width="800">
 
 ### Arp view (default)
