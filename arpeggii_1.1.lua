@@ -1,4 +1,4 @@
--- arpeggii v1.0
+-- arpeggii v1.1
 --
 -- dual arps      
 
@@ -10,12 +10,18 @@ local util = require 'util'
 -- constants
 -- ------------------------------------------------------------------
 
+-- default until the actual connected device reports its real size (see
+-- sync_grid_dims below) -- 16x8 (grid 128) is just the most common case
+-- to assume before that first report comes in. both get reassigned in
+-- place (not shadowed by a new local) whenever the device changes, so
+-- every function below that closes over these two sees the live value.
 local GRID_W = 16
 local GRID_H = 8
 
 -- k1 + a grid row sets a note's "play every N laps" divisor. all GRID_H
 -- rows are divisor rows: y = 1 (top) is the highest divisor, y = GRID_H
 -- (bottom) is divisor 1 (see lap_divisor_for_y / y_for_lap_divisor).
+-- reassigned alongside GRID_H in sync_grid_dims, for the same reason.
 local MAX_LAP_DIVISOR = GRID_H
 local MODULO_INDICATOR_LVL = 2
 local BOTTOM_ROW_ANCHOR_LVL = 9
@@ -2662,17 +2668,25 @@ end
 -- pattern view (save / recall grid)
 -- ------------------------------------------------------------------
 
--- left 8 columns = layer a's 64 slots, right 8 columns = layer b's 64 slots.
--- slot index within a layer's half is row-major: (row - 1) * 8 + col_in_half
-local PATTERN_HALF_W = GRID_W / 2 -- 8
+-- left half of the grid = layer a's slots, right half = layer b's.
+-- slot index within a layer's half is row-major: (row - 1) * half_w +
+-- col_in_half. computed fresh each call, not cached at load time, since
+-- GRID_W itself can change underneath this if the connected device does
+-- (see sync_grid_dims) -- a stale cached half-width would split the
+-- grid at the wrong column, or leave column 5-8 dead on an 8-wide device
+-- if this were still using a half-width baked in from a 16-wide one.
+local function pattern_half_w()
+  return math.floor(GRID_W / 2)
+end
 
 local function layer_num_for_col(x)
-  return (x <= PATTERN_HALF_W) and 1 or 2
+  return (x <= pattern_half_w()) and 1 or 2
 end
 
 local function slot_index_for_xy(x, y)
-  local col_in_half = (x <= PATTERN_HALF_W) and x or (x - PATTERN_HALF_W)
-  return (y - 1) * PATTERN_HALF_W + col_in_half
+  local half_w = pattern_half_w()
+  local col_in_half = (x <= half_w) and x or (x - half_w)
+  return (y - 1) * half_w + col_in_half
 end
 
 local function draw_pattern_grid()
@@ -3444,10 +3458,67 @@ function redraw()
 end
 
 -- ------------------------------------------------------------------
+-- grid size detection
+-- ------------------------------------------------------------------
+
+-- g.cols/g.rows only reflect the actual connected device once its own
+-- handshake with the grid completes -- not guaranteed to have happened
+-- yet at the moment grid.connect() first returns -- so GRID_W/GRID_H
+-- can't just be read once at file-load time (see the comment by their
+-- declaration above). this re-reads them and, if either changed, updates
+-- every dependent constant and repaints whatever's on screen. called
+-- once from init() and again any time a grid (re)connects, so swapping
+-- from a 128 to a 64 (or back) mid-session picks up the new size
+-- immediately rather than requiring a script restart.
+local function sync_grid_dims()
+  local new_w = (g.cols and g.cols > 0) and g.cols or GRID_W
+  local new_h = (g.rows and g.rows > 0) and g.rows or GRID_H
+  if new_w == GRID_W and new_h == GRID_H then return end
+
+  GRID_W = new_w
+  GRID_H = new_h
+  MAX_LAP_DIVISOR = GRID_H
+
+  -- a narrower device than before can leave a layer's sequence holding
+  -- more steps than it now has columns for -- trim from the right, the
+  -- same eviction path a note-insert overflow already uses (see
+  -- try_consume_insert above), rather than leaving state around that no
+  -- column can reach or display.
+  for _, layer in ipairs(layers) do
+    while #layer.sequence > GRID_W do
+      local overflow = layer.sequence[GRID_W + 1]
+      delete_instance(layer, overflow.id)
+    end
+  end
+
+  if view_mode == "pattern" then
+    draw_pattern_grid()
+  else
+    redraw_grid()
+  end
+end
+
+-- norns calls this whenever any grid device connects, including at
+-- script startup for one already plugged in -- only react if it's the
+-- specific device this script is bound to (dev == g), not some other
+-- grid the person happens to have attached.
+function grid.add(dev)
+  if dev == g then
+    sync_grid_dims()
+  end
+end
+
+-- ------------------------------------------------------------------
 -- init
 -- ------------------------------------------------------------------
 
 function init()
+  -- picks up the real device size in case grid.add already fired before
+  -- this point (e.g. a device that was already connected at script
+  -- start) -- harmless no-op if it hasn't, sync_grid_dims runs again
+  -- from grid.add itself once it does.
+  sync_grid_dims()
+
   -- everything from here through collision is one params:add_group of
   -- exactly 9 items -- MIDI in/out device+channel for both layers, plus
   -- collision (grouped here since collision only matters in the
