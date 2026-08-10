@@ -1,3 +1,5 @@
+<img src="media/1.png" width="800" alt="grid layout">
+
 # Arpeggii
 
 Two-layer arpeggiator with up to 16 notes, velocity control, note divisor/modulo and per-layer phrase save/recall.
