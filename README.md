@@ -13,13 +13,6 @@ Required: norns, grid 64 (untested) or 128, a midi input device, a midi-enabled 
 
 All controls apply to the currently selected layer only.
 
-| | |
-| `E1`: arp rate division | `K1`+`E1`: octave |
-| `E2`: arp play mode | `K1`+`E2`: repeats |
-| `E3`: edit velocity of all steps in current layer | `K1`+`E3`: rotate |
-| `K2`: flip layer | `K1`+`K2`: toggle hold |
-| `K3`: toggle phrase view | `K1`+`K3`: toggle sticky (new notes pile up) |
-
 - `E1`: arp rate division
 - `E2`: arp play mode
 - `E3`: edit velocity of all steps in current layer
