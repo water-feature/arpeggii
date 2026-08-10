@@ -30,7 +30,7 @@ All controls apply to the currently selected layer only.
 - tap column: set divisor (1-8). note only plays every x laps
 - tap again: mute/skip toggle. choose whether note is skipped or muted on the off laps
 - long press: invert toggle. note plays every lap except x
-- long press bottom row: insert/replace selected note. tap again to toggle between insert/replace
+- long press bottom row: insert/replace selected note. waits for next incoming midi note. tap again to toggle between insert/replace
 - press anywhere else to abort
 
 ### Phrase view (press/hold K3)
