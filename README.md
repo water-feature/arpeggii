@@ -64,4 +64,4 @@ Phrases contain a full layer snapshot, including arp settings.
 - **k1 priority**: chooses whether insert or replace is triggered first on k1+long press bottom row
 - **pending replace**: whether or not a note is silenced while awaiting replacement
 - **hold/sticky**: global or per-phrase
-- **clear all phrases**: wipes every saved phrase
+- **clear all phrases**: wipes all saved phrases
