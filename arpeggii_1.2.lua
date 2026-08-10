@@ -1,4 +1,4 @@
--- arpeggii v1.1
+-- arpeggii v1.2
 --
 -- dual arps      
 
@@ -62,7 +62,11 @@ local DIVISIONS = {
   {name = "1/1",   beat = 4},
 }
 
-local ARP_MODES = {"off", "up", "down", "updn", "dnup", "rand", "order", "ord.pp", "chord", "thru"}
+-- "chord" removed from rotation for now -- may come back later. the rest
+-- of the chord-mode code is untouched (and effectively dead) below;
+-- this is the only line that actually keeps the mode encoder from ever
+-- landing on it.
+local ARP_MODES = {"off", "up", "down", "updn", "dnup", "rand", "order", "ord.pp", "thru"} -- was: ..., "chord", "thru"
 
 local LAYER_NAMES = {"A", "B"}
 
@@ -593,9 +597,13 @@ local function order_pool(layer, pool)
   local out = {}
 
   if mode == "off" then
-    -- off mode bypasses the arp engine (see note_on/note_off), so there's
-    -- nothing to sequence or show on the grid here either
-    return out
+    -- off mode bypasses the arp engine for new notes (see note_on's raw
+    -- passthrough branch), but the grid should still show whatever's
+    -- currently held -- only the playhead itself goes away (see
+    -- arp_clock, which skips stepping/firing entirely while off). so
+    -- off keeps press order, same as order/ord.pp/chord below, rather
+    -- than returning an empty sequence.
+    out = pool
 
   elseif mode == "order" or mode == "ord.pp" or mode == "chord" then
     -- chord has no traversal order of its own either: every note sounds
@@ -2989,7 +2997,13 @@ local function arp_clock(layer)
   while true do
     clock.sync(DIVISIONS[layer.division_idx].beat)
 
-    if #layer.sequence > 0 then
+    -- "off" mode keeps layer.sequence populated now (see order_pool) so
+    -- the grid still shows the held notes, but the arp engine itself
+    -- must stay fully bypassed while off -- notes go out via note_on's
+    -- raw passthrough branch instead, never through here. this also
+    -- forces layer.step to 0 every tick (the "else" branch below), which
+    -- is what makes the playhead stop and disappear on the grid.
+    if #layer.sequence > 0 and ARP_MODES[layer.mode_idx] ~= "off" then
       -- thru just keeps replaying whatever frozen_mode was active before
       -- it froze, same substitution used everywhere else (order_pool,
       -- step_index, next_unmuted_step) -- so a layer frozen out of chord
