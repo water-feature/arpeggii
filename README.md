@@ -61,7 +61,7 @@ Phrases contain a full layer snapshot, including arp settings.
 - **fuzz press/all**: velocity randomised either only on grid tap or every time the note is triggered
 - **lap memory on**: the lap divisor settings are retained even when a new arp is played
 - **rotation**: allows divisor settings to be rotated without rotating notes
-- **k1 priority**: chooses whether insert or replace is triggered first on k1+long press bottom row
-- **pending replace**: whether or not a note is silenced while awaiting replacement
-- **hold/sticky**: global or per-phrase
+- **k1 priority**: chooses whether the k1+long press bottom row gesture triggers insert or replace first
+- **pending replace**: mutes the selected note while awaiting replacement
+- **hold/sticky**: per-layer or per-phrase
 - **clear all phrases**: wipes all saved phrases
