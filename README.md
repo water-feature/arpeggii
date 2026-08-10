@@ -14,7 +14,6 @@ Required: norns, grid 64 (untested) or 128, a midi input device, a midi-enabled 
 All controls apply to the currently selected layer only.
 
 | | |
-|---|---|
 | `E1`: arp rate division | `K1`+`E1`: octave |
 | `E2`: arp play mode | `K1`+`E2`: repeats |
 | `E3`: edit velocity of all steps in current layer | `K1`+`E3`: rotate |
