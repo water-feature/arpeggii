@@ -1,4 +1,4 @@
-<img src="media/ 2.png" width="800">
+<img src="media/3.png" width="800">
 
 # Arpeggii
 
