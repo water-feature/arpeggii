@@ -34,13 +34,14 @@ All controls apply to the currently selected layer only.
 ### Phrase view (press/hold K3)
 
 Phrases contain a full layer snapshot, including arp settings.
+  Snapshots containing no notes are displayed dimmer on the grid.
 
 - left 64 cells: layer A
 - right 64 cells: layer B
 - tap to save/recall
 - `K1`+tap to delete
 
-Snapshots containing no notes are displayed dimmer on the grid.
+
 
 ### Parameters
 
