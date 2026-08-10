@@ -57,7 +57,7 @@ Phrases contain a full layer snapshot, including arp settings.
   - *skip*: the second note on is ignored
 - **autosave**: reloads the last state on boot
 - **load last session**: reload the autosave backup on demand
-- **velocity fuzz**: randomises velocity by x amount
+- **grid vel fuzz**: randomises velocity by x amount
 - **fuzz press/all**: velocity randomised either only on grid tap or every time the note is triggered
 - **lap memory on**: the lap divisor settings are retained even when a new arp is played
 - **rotation**: allows divisor settings to be rotated without rotating notes
