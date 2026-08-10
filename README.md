@@ -1,4 +1,4 @@
-<img src="media/1.png" width="800" alt="grid layout">
+<img src="media/1.png" width="800">
 
 # Arpeggii
 
