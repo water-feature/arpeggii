@@ -1,5 +1,5 @@
 
-# Arpeggii
+# arpeggii
 
 Two-layer arpeggiator with up to 16 notes, velocity control, note divisor/modulo and per-layer phrase save/recall.
 
