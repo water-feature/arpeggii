@@ -300,6 +300,11 @@ local try_consume_insert
 -- the right edge.
 local delete_instance
 
+-- forward declared: defined after arp_clock below, so recall_layer
+-- (earlier) can also use it -- see the restart_arp_clock comment at its
+-- definition for why a division change needs this at all.
+local restart_arp_clock
+
 -- every note-on gets its own instance id, independent of pitch, so two
 -- instances of the same pitch (e.g. a retrigger while hold is on) are
 -- editable independently rather than sharing state.
@@ -1066,7 +1071,16 @@ local function recall_layer(layer, snapshot)
   -- still physically held, whatever mode the layer is leaving or entering.
   release_all_held_notes(layer)
 
+  local old_division_idx = layer.division_idx
   layer.division_idx = snapshot.division_idx or layer.division_idx
+  if layer.division_idx ~= old_division_idx then
+    -- same staleness fix as the encoder path -- see restart_arp_clock's
+    -- comment. layer.clock_id is always already set by the time a phrase
+    -- can be recalled (this only fires from a grid press at runtime,
+    -- never during init), so the guard inside restart_arp_clock is just
+    -- belt-and-suspenders here.
+    restart_arp_clock(layer)
+  end
   layer.mode_idx = snapshot.mode_idx or layer.mode_idx
   layer.frozen_mode = snapshot.frozen_mode or "up"
   layer.octave_span = util.clamp(snapshot.octave_span or 0, -1, 3)
@@ -3260,6 +3274,21 @@ local function arp_clock(layer)
   end
 end
 
+-- clock.sync(beat) commits to waiting for the NEXT boundary of whatever
+-- beat value was passed in at the moment it was called -- it doesn't
+-- notice if layer.division_idx changes while it's still waiting. so
+-- without this, switching a layer from a slow division (e.g. 1/1) to a
+-- fast one (e.g. 1/32) while a tick is already in flight leaves the arp
+-- stuck finishing out that one slow tick before the new, faster rate
+-- ever takes effect. restarting the coroutine here throws away that
+-- stale wait and re-enters arp_clock's loop immediately, so the very
+-- next clock.sync call reads the just-changed division_idx and syncs to
+-- the new (short) tick right away instead of the old one.
+restart_arp_clock = function(layer)
+  if layer.clock_id then clock.cancel(layer.clock_id) end
+  layer.clock_id = clock.run(function() arp_clock(layer) end)
+end
+
 -- ------------------------------------------------------------------
 -- norns ui
 -- ------------------------------------------------------------------
@@ -3370,7 +3399,14 @@ function enc(n, d)
       -- carrying over a value that may no longer even fit the new span
       layer.note_octave_lap = {}
     else
-      layer.division_idx = util.clamp(layer.division_idx + d, 1, #DIVISIONS)
+      local new_division_idx = util.clamp(layer.division_idx + d, 1, #DIVISIONS)
+      if new_division_idx ~= layer.division_idx then
+        layer.division_idx = new_division_idx
+        -- kick the arp coroutine awake now rather than letting it finish
+        -- out whatever old, possibly much-longer tick it's already
+        -- mid-wait on -- see restart_arp_clock above.
+        restart_arp_clock(layer)
+      end
     end
     rebuild_sequence(layer)
   elseif n == 2 then
